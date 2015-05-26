@@ -3,83 +3,130 @@
 Plugin Name: GSconfig UI
 Description: UI shim for gsconfig.php. Tweak config settings directly from GS CMS.
              Requires GS Custom Settings 0.4+
-Version: 0.1
+Version: 0.2
 Author: Kevin Van Lierde
-Author URI: http://webketje.github.io
+Author URI: http://webketje.com
 */
 
-// add in this plugin's language file
-i18n_merge('gsonfig_ui') || i18n_merge('gsconfig_ui', 'en_US');
+$gsconfig_ui_file = basename(__FILE__, '.php');
+i18n_merge($gsconfig_ui_file) || i18n_merge($gsconfig_ui_file, 'en_US');
 
-/* 4 more to be tested: custom_salt, login_salt, editor_options, admin_folder */
-/* 1 to be modified gs_editor_toolbar_custom */
-# register plugin
-register_plugin('gsconfig_ui',          # ID of plugin, should be filename minus php
+register_plugin($gsconfig_ui_file,      # ID of plugin, should be filename minus php
   i18n_r('gsconfig_ui/PLUGIN_NAME'),    # Title of plugin
-  '0.1',                                # Version of plugin
+  '0.2',                                # Version of plugin
   'Kevin Van Lierde',                   # Author of plugin
-  'http://webketje.github.io',          # Author URL
+  'http://webketje.com',                # Author URL
   i18n_r('gsconfig_ui/PLUGIN_DESCR'),   # Plugin Description
   'plugins'                             # Page type of plugin
 );
 
+// provide a way for other themes/ plugins to check 
+// whether GSconfig UI is active and what version
+define('GSCONFIG_UI', '0.2');
+
 // hooks
 add_action('custom-settings-load', 'gsconfig_ui_load');
 add_action('custom-settings-save', 'gsconfig_ui_update');
-add_action('custom-settings-render-top', 'custom_settings_render', array('gsconfig_ui', 'gsconfig_ui_output'));
-add_action('custom-settings-render-bottom', 'custom_settings_render', array('gsconfig_ui', 'gsconfig_ui_scripts'));
+add_action('custom-settings-render-bottom', 'custom_settings_render', array('gsconfig_ui', 'gsconfig_ui_output'));
 add_action('successful-login-start', 'gsconfig_ui_setpwd');
 
+// TODO: JS inside this function needs to be moved to a separate file, only retain PHP dynamic settings
 function gsconfig_ui_output() 
-{  ?>
+{ $gs_is_wide = return_setting('gsconfig_ui', 'gs_style') > 1 ? true : false; ?>
 	<style>
-		#salt-generator { padding: 3px 5px; }
-		#salt-generator-output { padding: 2px 4px; -moz-border-radius: 3px; -webkit-border-radius: 3px; -o-border-radius: 3px; border-radius: 3px; border: 1px solid #ddd; outline: none; max-width: 95%;}
-		#custom-toolbar-builder { transition: .5s height; width: 646px; margin-top: 20px; position: relative; left: -5000px; border: 1px solid #ccc;  height: 0; }
-		#custom-toolbar-builder-toggle { position: absolute; margin-top: 6px; margin-left: 5px; }
-		#toolbar-gen { padding-left: 20px; }
+		#custom-toolbar-builder { transition: .5s height; width: 100%; max-width: 700px; margin-top: 20px; position: relative; left: -5000px; border: 1px solid #ccc; height: 0px; }
+		#custom-toolbar-builder-toggle { position: absolute; margin-left: <?php echo $gs_is_wide ? '10' : '5'; ?>px; margin-top: <?php echo $gs_is_wide ? '4' : '14'; ?>px;}
+		#toolbar-gen { padding-left: 18px; <?php echo $gs_is_wide ? '' : 'margin-left: 0px; margin-top: 10px; display: block;'; ?> }
+		.manage .setting-descr code.gsconfig-constant, .ko-setting-descr code.gsconfig-constant { font-style: normal; background: none; padding: 0; }
+		.manage .setting-descr, .ko-setting-descr { width: initial !important; } .ko-setting-descr { float: none !important; }
+		.manage .setting div pre.ko-code, .ko-list-item input.ko-code, .ko-list-item .ko-3-5.ko-float-left span.ko-1-3 { display: none !important; }
+		.manage .setting .button, .ko-list-item .button { padding: 1px 3px; margin-left: 5px; }
 	</style>
-	<input type="button" id="salt-generator" class="submit" onclick="saltGeneratorString()" value="<?php i18n('gsconfig_ui/GEN_SALT'); ?>">
-	<input type="text" id="salt-generator-output">
-	<br><br><i id="custom-toolbar-builder-toggle" class="fa fa-plus"></i>
-	<input id="toolbar-gen" type="button" class="button" value="<?php i18n('gsconfig_ui/CUSTOM_TOOLBAR'); ?>" onclick="toggleToolbarGen()">
+	<i id="custom-toolbar-builder-toggle" class="fa fa-plus"></i>
+	<input id="toolbar-gen" type="button" class="button" value="<?php i18n('gsconfig_ui/CUSTOM_TOOLBAR'); ?>" onclick="gsconfigUI.toggleToolbarGen(true, this)">
 	<iframe id="custom-toolbar-builder" src="http://rawgit.com/webketje/8c949d57beffe097a770/raw/cd99027f3cd9038fae9e11f62489e0cab662d458/index.html"></iframe>
+	
 	<script type="text/javascript">
-		function toggleToolbarGen(e) { 
+		var gsconfigUI = {};
+		gsconfigUI.toggleToolbarGen = function(state, elem) { 
 			var d = document.getElementById('custom-toolbar-builder'), 
-			s = document.getElementById('custom-toolbar-builder-toggle'); 
-			if (!d.style.marginLeft) 
-				d.style.left = '0px';
-			s.className = d.style.height == '0px' ? 'fa fa-plus' : 'fa fa-minus'; 
-			d.style.borderWidth = d.style.height == '0px' || !d.style.height ? '1px' : '0px'; 
-			d.style.height = d.style.height == '0px' || !d.style.height ? '290px' : '0px';  
-		}
-		function saltGeneratorString() {
-			var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz !-^$=:|#*%~+?";
-			var string_length = 55;
-			var randomstring = '';
-			for (var i=0; i<string_length; i++) {
-				var rnum = Math.floor(Math.random() * chars.length);
-				randomstring += chars.substring(rnum,rnum+1);
+					s = document.getElementById('custom-toolbar-builder-toggle');
+			if (elem && elem.id === 'toolbar-gen')
+				state = s.className === 'fa fa-minus' ? false : true;
+			if (state) {
+				s.className =  'fa fa-minus';
+				d.style.cssText = 'border-width: 1px; height: <?php echo $gs_is_wide ? '245px' : '290px'; ?>; left: 0px;';
+			} else {
+				s.className = 'fa fa-plus'; 
+				d.style.cssText = 'border-width: 0px;';
 			}
-			document.getElementById('salt-generator-output').value = randomstring;
-			document.getElementById('salt-generator-output').select();
+			if (elem.nodeName === 'A')
+				d.scrollIntoView();
+		};
+		gsconfigUI.generateSalt = function(target) {
+			var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz !-^$=:|#*%~+?",
+				saltgen = document.getElementById('salt-generator-output'),
+				strlen = 55, randomstring = '';
+			for (var i=0; i<strlen; i++) {
+				var rnum = Math.floor(Math.random() * chars.length);
+				randomstring += chars.substring(rnum, rnum+1);
+			}
+			GSCS.returnSetting('gsconfig_ui', target).value(randomstring);
 		}
-		addHook(function() {
-			var adminSetting = GSCS.returnSetting('gsconfig_ui', 'gs_admin');
-			adminSetting.value.subscribe(function(value) {
-				document.getElementById('custom-settings-save-btn').onclick = function() {
-					if (!(GLOBAL.ADMINDIR === 'admin' && (value === '' || value == 'admin'))) {
-						setTimeout(function() {
-							location.href = location.href.replace(GLOBAL.ADMINDIR, trim(value) ? value : 'admin');
-						}, 3000);
+		gsconfigUI.appendConstants = function(value) {
+			if (!value || GSCS.data.items()[value].lookup() === 'gsconfig_ui') {
+				var allTabs = GSCS.data.items(), 
+						settings = ko.utils.arrayFirst(allTabs, function(tab) { return tab.lookup() === 'gsconfig_ui' }).settings.items(),
+						settingSelector = $('.setting').length ? '.setting' : '.ko-list-item';
+				$(settingSelector).each(function() {
+					var index = $(this).index(),
+						  constant = settings[index].constant;
+					if (settings[index].type() !== 'section-title') {
+						var descr = $(this).find('p');
+						if (constant !== 'GSEDITORTOOLCUSTOM') {
+							if (descr.text().length) 
+								descr.prepend('<code class="gsconfig-constant">(' + constant + ')</code> - ');
+							else
+								descr.prepend('<code class="gsconfig-constant">(' + constant + ')</code>');
+							if (/GS.*SALT/.test(constant)) {
+								descr.append('<input type="button" class="button" onclick="gsconfigUI.generateSalt(\'' + settings[index].lookup() + '\')" value="<?php i18n('gsconfig_ui/GEN_SALT'); ?>">');
+							}
+						} else {
+							<?php echo !$gs_is_wide ? 'descr.append(\'<br>\');' : ''; ?>
+							descr = descr[0];
+							descr.appendChild(document.getElementById('custom-toolbar-builder-toggle'))
+							descr.appendChild(document.getElementById('toolbar-gen'));
+							descr.appendChild(document.createElement('br'));
+							$(this).children().last().before(document.getElementById('custom-toolbar-builder'));
+						}
 					}
+				});
+			}
+		};		
+		gsconfigUI.adminDirChange = function(value) {
+			document.getElementById('custom-settings-save-btn').onclick = function() {
+				if (!(GLOBAL.ADMINDIR === 'admin' && (value === '' || value == 'admin'))) {
+					setTimeout(function() {
+						location.href = location.href.replace(GLOBAL.ADMINDIR, trim(value) ? value : 'admin');
+					}, 3000);
 				}
-			});
-		});
+			}
+		};
+		gsconfigUI.init = function() {
+			if (GSCS.data.items()[GSCS.data.activeItem()].lookup() === 'gsconfig_ui')
+				gsconfigUI.appendConstants();
+			GSCS.returnSetting('gsconfig_ui', 'gs_admin').value.subscribe(gsconfigUI.adminDirChange);
+			GSCS.data.activeItem.subscribe(gsconfigUI.appendConstants);
+		};
+		
+		addHook(gsconfigUI.init);
 	</script>
 	<?php 
 }
+
+// executed in hook 'successful-login-start', 
+// automatically hashes the password with the last set GSLOGINSALT,
+// thereby avoiding trouble with re-setting cookies 
 function gsconfig_ui_setpwd() 
 {
 	global $password, $user_xml;
@@ -87,7 +134,11 @@ function gsconfig_ui_setpwd()
 	$datau->PWD = passhash($password);
 	XMLsave($datau, GSUSERSPATH . strtolower($datau->USR) . '.xml');
 }
-// on settings load, cache to global to compare whether any setting has changed
+
+// on settings load, 
+// 1) globalize $gsconfig for other plugins to make use of in format $gsconfig['CONSTANT']
+// 2) flatten gsconfig settings to a temp file which is later retrieved for comparison in gsconfig_ui_update
+// need to update this flat file to JSON for default setting retrieval
 function gsconfig_ui_load() 
 {
 	global $gsconfig;
@@ -110,12 +161,14 @@ function gsconfig_ui_update()
 	
 	$ss = return_setting_group('gsconfig_ui', 'gs', false);
 	$gsconfig_ui_settings_presave = array();
+	$tempDataPath = GSPLUGINPATH . 'gsconfig_ui/temp_data.txt';
 	foreach ($ss as $l => $s) {
 		if ($s['type'] !== 'section-title')	$gsconfig_ui_settings_presave[$s['constant']] = array_merge($s, array('lookup', $l));
 	}
-	$comp_load = file_get_contents(GSPLUGINPATH . 'gsconfig_ui/temp_data.txt');
+	if (file_exists($tempDataPath))
+		$comp_load = file_get_contents(GSPLUGINPATH . 'gsconfig_ui/temp_data.txt');
 	$comp_save = array_reduce($gsconfig_ui_settings_presave, 'gsconfig_ui_flatten_setting');
-	if ($comp_load !== $comp_save) {
+	if (!isset($comp_load) || $comp_load !== $comp_save) {
 		$rgx = '~(#* *?)(define\()(.*?),(.*)(\);)~';
 		$gssf = false;
 		$path = GSROOTPATH . 'gsconfig.php';
@@ -125,7 +178,8 @@ function gsconfig_ui_update()
 		$output = preg_replace('~#* *setlocale.*?\);~', ($locrep['value'] ? 'setlocale(LC_ALL, \''. $locrep['value'] . '\');' : '#setlocale(LC_ALL, \'en_US\');'), $output);
 		file_put_contents($path, $output);
 	}
-	unlink(GSPLUGINPATH . 'gsconfig_ui/temp_data.txt');
+	if (file_exists($tempDataPath))
+		unlink(GSPLUGINPATH . 'gsconfig_ui/temp_data.txt');
 }
 
 function gsconfig_ui_flatten_setting($carry, $key) 
@@ -133,6 +187,7 @@ function gsconfig_ui_flatten_setting($carry, $key)
 	return $carry .= ' ' . $key['value']; 
 }
 
+// TODO: not very clean
 function gsconfig_ui_iterate($match) 
 {
 	// $r = result, $gsconfig_ui_settings_presavei = dictionary, $m = matches, $l = lookup, $s = setting

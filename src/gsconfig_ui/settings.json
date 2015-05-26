@@ -2,9 +2,10 @@
 	"tab":{
 		"lookup":"gsconfig_ui",
 		"label":"GS config",
-		"version":"0.1",
+		"version":"0.2",
 		"enableReset":true,
-		"enableAccessAll": false
+		"enableAccessAll": false,
+		"enableCodeDisplay": false
 	},
 	"settings":[
 		{
@@ -26,8 +27,8 @@
 			"lookup":"gs_admin",
 			"value":"admin",
 			"type":"text",
-			"descr":"Temporarily hidden - Warning: change at your own risk. This might break your current install.",
-			"access":"hidden",
+			"descr":"Attention: if you changed this setting, you will be redirected to the new path within 3 seconds after clicking Save updates.",
+			"access":"normal",
 			"label":"Administrative panel folder name:",
 			"default":"admin",
 			"constant":"GSADMIN"
@@ -89,7 +90,7 @@
 			"lookup":"gs_editor_toolbar_custom",
 			"value":"",
 			"type":"textarea",
-			"descr":"Only works if Editor Toolbar setting is set to 'custom'. Use the <a href=\"javascript: (function() { var p = document.getElementById('toolbar-gen'); p.scrollIntoView(); p.click(); }())\">Custom toolbar builder</a>",
+			"descr":"Only works if Editor Toolbar setting is set to 'custom'.",
 			"access":"normal",
 			"label":"Editor custom toolbar buttons",
 			"default":"",
@@ -193,7 +194,7 @@
 			"type":"checkbox",
 			"descr":"Uncheck to force loading from your own server.",
 			"access":"normal",
-			"label":"Enable loading of external CDN versions of scripts (jQuery\/jQueryUI)",
+			"label":"Enable loading of external CDN versions of scripts (jQuery/jQueryUI)",
 			"default":true,
 			"constant":"GSNOCDN"
 		},
@@ -236,7 +237,7 @@
 			"lookup":"gs_php_locale",
 			"value":"",
 			"type":"text",
-			"descr":"See <a href=\"http:\/\/php.net\/manual\/en\/function.setlocale.php\">php.net\/manual\/en\/function.setlocale.php</a> for details.",
+			"descr":"See <a href=\"http://php.net/manual/en/function.setlocale.php\">php.net/manual/en/function.setlocale.php</a> for details.",
 			"access":"normal",
 			"label":"Set PHP locale",
 			"default":"",
@@ -246,7 +247,7 @@
 			"lookup":"gs_timezone",
 			"value":"",
 			"type":"text",
-			"descr":"Valid timezones can be found at <a href=\"http:\/\/www.php.net\/manual\/en\/timezones.php\">php.net\/manual\/en\/timezones.php</a>.",
+			"descr":"Valid timezones can be found at <a href=\"http://www.php.net/manual/en/timezones.php\">php.net/manual/en/timezones.php</a>.",
 			"access":"normal",
 			"label":"Default server timezone",
 			"default":"",
