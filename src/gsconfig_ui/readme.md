@@ -2,8 +2,8 @@
 
 GSconfig UI is a UI shim plugin for GetSimpleCMS' `gsconfig.php`. That means you can tweak the config settings straight from your admin backend, and what's more, without needing to reload the page, log on and off when you change salts, or flush the cache when you change the backend styles! **Important**: this plugin *does not* read into your existing config, so make sure to synchronize changes to the default config in the UI before hitting 'Save updates'.
 ### Plugin info ###
-- Version: 0.1
-- Release Date: 20 May 2015
+- Version: 0.2
+- Release Date: 26 May 2015
 - Documentation: [webketje.com/](http://webketje.github.io/projects/gs-custom-settings)
 - Author: Kevin Van Lierde (Tyblitz)
 - Author URL: [webketje.com](http://webketje.com)
@@ -35,6 +35,5 @@ GSconfig UI is a UI shim plugin for GetSimpleCMS' `gsconfig.php`. That means you
 * The settings for `GSEDITORTOOL` and `GSEDITOROPTIONS` need some polishing.
 
 ### Preview ###
-
 
 ![](http://i.imgur.com/czkUu5o.png)
