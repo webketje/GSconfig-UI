@@ -63,6 +63,10 @@ function gsconfig_ui_output()
 			if (elem.nodeName === 'A')
 				d.scrollIntoView();
 		};
+		gsconfigUI.addMissingResetButton = function() {
+			var tab = ko.utils.arrayFirst(GSCS.data.items(), function(item) { item.lookup() === 'gsconfig_ui' });
+			if (tab && !tab.enableReset) tab.enableReset = true;
+		};
 		gsconfigUI.generateSalt = function(target) {
 			var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz !-^$=:|#*%~+?",
 				saltgen = document.getElementById('salt-generator-output'),
@@ -102,22 +106,26 @@ function gsconfig_ui_output()
 					}
 				});
 			}
-		};		
+		};	
 		gsconfigUI.adminDirChange = function(value) {
-			document.getElementById('custom-settings-save-btn').onclick = function() {
-				if (!(GLOBAL.ADMINDIR === 'admin' && (value === '' || value == 'admin'))) {
-					setTimeout(function() {
-						location.href = location.href.replace(GLOBAL.ADMINDIR, trim(value) ? value : 'admin');
-					}, 3000);
-				}
-			}
-		};
-		gsconfigUI.init = function() {
-			if (GSCS.data.items()[GSCS.data.activeItem()].lookup() === 'gsconfig_ui')
-				gsconfigUI.appendConstants();
-			GSCS.returnSetting('gsconfig_ui', 'gs_admin').value.subscribe(gsconfigUI.adminDirChange);
-			GSCS.data.activeItem.subscribe(gsconfigUI.appendConstants);
-		};
+      document.getElementById('custom-settings-save-btn').onclick = function() {
+        if (!(GLOBAL.ADMINDIR === 'admin' && (value === '' || value == 'admin'))) {
+          setTimeout(function() {
+            location.href = location.href.replace(GLOBAL.ADMINDIR, value.trim() ? value.trim() : 'admin');
+          }, 3000);
+        }
+      }
+    };
+    gsconfigUI.init = function() {
+      if (GSCS.data.items()[GSCS.data.activeItem()].lookup() === 'gsconfig_ui') {
+				gsconfigUI.addMissingResetButton();
+        gsconfigUI.appendConstants();
+        gsconfigUI.adminDirChange();
+      }
+      GSCS.returnSetting('gsconfig_ui', 'gs_admin').value.subscribe(gsconfigUI.adminDirChange);
+      GSCS.data.activeItem.subscribe(gsconfigUI.appendConstants);
+			GSCS.data.activeItem.subscribe(gsconfigUI.addMissingResetButton);
+    };
 		
 		addHook(gsconfigUI.init);
 	</script>
@@ -260,20 +268,22 @@ function gsconfig_ui_iterate($match)
 				$r = (!$s['value'] ? '#' : '') . $m['def'] . $m['const'] . ',' . $s['value'] . $m['end'];
 				break;
 		  // text settings commented out by default
-			case 'gs_login_salt':
-			case 'gs_custom_salt':
-				require_once(GSADMININCPATH . 'configuration.php');
-				global $SALT, $cookie_time, $cookie_name;
-				$SALT = sha1($s['value']);
-				kill_cookie($cookie_name);
-				create_cookie();
-			case 'gs_editor_options':
-			case 'gs_timezone':
 			case 'gs_admin': 
-				rename(GSADMINPATH, GSROOTPATH . $s['value'] .'/');
-			case 'gs_from_email':
-				$r = (!$s['value'] ? '#' : '') . $m['def'] . $m['const'] . ',\'' . $s['value'] . '\'' . $m['end'];
-				break;
+        rename(GSADMINPATH, GSROOTPATH . $s['value'] .'/');
+        $r = (!$s['value'] ? '#' : '') . $m['def'] . $m['const'] . ',\'' . $s['value'] . '\'' . $m['end'];
+        break;
+      case 'gs_custom_salt':
+        require_once(GSADMININCPATH . 'configuration.php');
+        global $SALT, $cookie_time, $cookie_name;
+        $SALT = sha1($s['value']);
+        kill_cookie($cookie_name);
+        create_cookie();
+      case 'gs_login_salt':
+      case 'gs_editor_options':
+      case 'gs_timezone':
+      case 'gs_from_email':
+        $r = (!$s['value'] ? '#' : '') . $m['def'] . $m['const'] . ',\'' . $s['value'] . '\'' . $m['end'];
+        break;
 		  // following 3 are not commented out by default
 			case 'gs_suppress_errors':
 				$r = ($s['value'] ? '' : '#') . $m['def'] . $m['const'] . ',' . ($s['value'] ? 'true' : 'false') . $m['end'];

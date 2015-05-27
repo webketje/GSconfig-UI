@@ -1,3 +1,9 @@
+27/05/2015 - V. 0.2.1
+
+Bugfixes:
+	- Fixed potential problems with SALT's & admin dir getting mixed up
+	- Fixed absence of redirect when changing admin dir name
+
 25/05/2015 - V. 0.2
 
 New: 
